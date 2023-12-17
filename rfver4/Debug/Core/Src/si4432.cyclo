@@ -1,0 +1,9 @@
+../Core/Src/si4432.c:56:9:si4432_tx_packet	4
+../Core/Src/si4432.c:89:9:si4432_rx_packet	7
+../Core/Src/si4432.c:128:9:si4432_init	5
+../Core/Src/si4432.c:202:6:si4432_idle	1
+../Core/Src/si4432.c:214:6:si4432_transmit	3
+../Core/Src/si4432.c:233:6:si4432_receive	1
+../Core/Src/si4432.c:249:13:si4432_packet_received	5
+../Core/Src/si4432.c:277:9:si4432_read_register	1
+../Core/Src/si4432.c:289:6:si4432_write_register	1

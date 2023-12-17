@@ -1,0 +1,8 @@
+../Drivers/CMSIS/Include/core_cm3.h:1762:34:__NVIC_SystemReset	1
+../Core/Src/uart.c:23:9:uart1_init	3
+../Core/Src/uart.c:48:9:uart2_init	3
+../Core/Src/uart.c:66:9:uart_transmit_string	4
+../Core/Src/uart.c:87:9:uart_recieve_string	4
+../Core/Src/uart.c:109:6:uart1_echo	3
+../Core/Src/uart.c:122:6:USART1_IRQHandler	2
+../Core/Src/uart.c:141:6:USART2_IRQHandler	2

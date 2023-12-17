@@ -1,0 +1,9 @@
+../Core/Src/si4432.c:56:9:si4432_tx_packet	24	static
+../Core/Src/si4432.c:89:9:si4432_rx_packet	32	static
+../Core/Src/si4432.c:128:9:si4432_init	24	static
+../Core/Src/si4432.c:202:6:si4432_idle	8	static
+../Core/Src/si4432.c:214:6:si4432_transmit	24	static
+../Core/Src/si4432.c:233:6:si4432_receive	8	static
+../Core/Src/si4432.c:249:13:si4432_packet_received	32	static
+../Core/Src/si4432.c:277:9:si4432_read_register	24	static
+../Core/Src/si4432.c:289:6:si4432_write_register	16	static

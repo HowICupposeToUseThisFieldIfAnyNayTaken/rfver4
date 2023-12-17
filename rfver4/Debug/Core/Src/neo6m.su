@@ -1,0 +1,4 @@
+../Core/Src/neo6m.c:14:9:ubx_msg_is_correct	24	static
+../Core/Src/neo6m.c:26:9:ubx_tim_tp_decrypt	24	static
+../Core/Src/neo6m.c:36:9:ubx_set_time	24	static
+../Core/Src/neo6m.c:46:10:ubx_little_endiad_to_normal	24	static

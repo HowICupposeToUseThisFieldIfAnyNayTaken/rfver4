@@ -1,0 +1,227 @@
+/*сборник неиспользуемых функций
+ * garbage.c
+ *
+ *  Created on: 4 авг. 2023 г.
+ *      Author: Попытка номер 5
+ */
+ /*
+int8_t uart_transmit_interrupt(char *char_tx){//отсылает данные до \0
+	if((USART1->SR &  USART_SR_TXE) == 0) return UART_RX_NOT_READY;
+	global_uart_tx_data = char_tx;
+	//USART1->CR1 |= USART_CR1_TE;//send an idle frame as first transmission.
+
+	//USART1->DR = char_tx[0];
+	if(char_tx[0] != '\0'){//если надо передать чтото кроме конца строки
+		global_uart_tx_iterator = -1;
+		global_uart_flag_data_transmitted = 0;
+	}
+	USART1->CR1 |= USART_CR1_TXEIE;// прерывание по передаче
+	return 0;
+}*/
+/*
+void USART1_IRQHandler(){
+	uint32_t clear_iddle_flag = 0;
+	int32_t reg_tmp = USART1->SR;//сохраняем статус регистр
+	if(reg_tmp &  USART_SR_IDLE){//если на Rx нет движения
+		clear_iddle_flag = USART1->SR;
+		clear_iddle_flag = USART1->DR;
+		clear_iddle_flag = USART1->SR;
+		global_uart_flag_data_recieved =  1;
+		//global_uart_rx_iterator = -1;
+		global_uart_rx_iterator = UART_RX_BUFF_SIZE - UART_RX_CHANEL->CNDTR;//буфер минус переданные байты
+
+		DMA1_RX_DISABLE();
+	}
+	reg_tmp = USART2->SR;//сохраняем статус регистр
+	if(reg_tmp &  USART_SR_IDLE){//если на Rx нет движения
+		clear_iddle_flag = USART2->SR;
+		clear_iddle_flag = USART2->DR;
+		clear_iddle_flag = USART2->SR;
+		global_uart2_flag_data_recieved =  1;
+		//global_uart2_rx_iterator = -1;
+		global_uart2_rx_iterator = UART_RX_BUFF_SIZE - UART2_RX_CHANEL->CNDTR;//буфер минус переданные байты
+		DMA1_RX2_DISABLE();
+	}
+}*/
+	while(is_master){//для ведущего устройства
+		/*main_tx_operation(data_to_transfer,CC1101_FIXED_PACKET_LENGTH);//передаем по cc1101
+
+		//main_rf_master_echo(rf_rx_data);
+				cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+				n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+				cc1101_wait_until_iddle_state();
+				if(n_bytes_recieved){
+					uart_transmit_string(rf_rx_data, n_bytes_recieved);
+			}*/
+
+	}//общее эхо конец
+	while(is_master == 0){//для ведомого устройства
+		/*cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+		do{
+			cc1101_status_byte = cc1101_command_strobe(CC1101_STROBE_SNOP,1);
+			rx_num_data = cc1101_data_read(CC1101_RXBYTES);
+					n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+					if(n_bytes_recieved){
+												tmp = cc1101_data_read(PKTSTATUS);//информация о принятом пакете
+												crc_ok =tmp & CC1101_CRC_OK;
+					}
+
+					//cc1101_wait_until_iddle_state();
+		rx_num_data = cc1101_data_read(CC1101_RXBYTES);
+		n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+		cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SNOP,1);
+						if(n_bytes_recieved){
+							tmp = cc1101_data_read(PKTSTATUS);//информация о принятом пакете
+							crc_ok =tmp & CC1101_CRC_OK;
+							if(crc_ok ){
+								crc_ok = 0;
+								cc1101_wait_until_iddle_state();
+							}
+						}
+		//main_tx_operation(data_to_transfer,CC1101_FIXED_PACKET_LENGTH);//передаем по cc1101
+		//main_rf_slave_echo(rf_rx_data);
+
+		}
+	while((cc1101_status_byte & CC1101_STATUS_STATE_MASK) != CC1101_STATUS_STATE_IDDLE);*/
+	}//общее эхо конец
+uint8_t main_rf_master_echo(uint8_t *rf_rx_data){
+	static uint8_t n_bytes_recieved = 0;
+	static uint8_t crc_ok = 1;
+	uint8_t cc1101_status_byte = 0;
+	const char message[] = "wait for cmd";
+//uart прием
+
+	global_main_flag_tim3_update = 0;
+	if(crc_ok){
+		crc_ok = 0;
+		uart_transmit_string(message,str_len(message));
+		uart_recieve_string(global_uart_rx_data);//инициируем прием пакета через дма
+		while(!global_uart_flag_data_recieved){}//ждет пакета по юарт
+		if(global_uart_rx_iterator <=0)//если юарт не определил длину сообщения сам, помогаем ему
+			global_uart_rx_iterator = str_len(global_uart_rx_data);
+	}
+//передача сс1101
+	tim3_init(2*TIM_1SEC_PSC,TIM_1SEC_ARR);//3сек
+	TIM3_ENABLE();//таймер приема. указанное время трансивер будет пытаться отправить пакет
+	while(1){
+		if(global_uart_rx_iterator > 0){
+			main_tx_operation(global_uart_rx_data,CC1101_FIXED_PACKET_LENGTH);//передаем по cc1101
+		}
+	}
+	TIM3_DISABLE();
+	cc1101_packet_processing_ended = 0;//сбрасываем флаг получения\отправки пакета
+
+//прием сс1101
+	global_main_flag_tim3_update = 0;
+	tim3_init(3*TIM_1SEC_PSC,TIM_1SEC_ARR);//3сек
+	TIM3_ENABLE();//таймер приема. указанное время трансивер будет пытаться поймать пакет
+	cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+	while(!(global_main_flag_tim3_update || crc_ok)){//ждем 1 секунду или до получения пакета с верной CRC
+		if(cc1101_packet_processing_ended){//если получег пакет
+			cc1101_packet_processing_ended = 0;
+			n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+			if(n_bytes_recieved)
+				crc_ok = cc1101_paket_crc_check(rf_rx_data);//проверяем CRC
+		}//if
+	}//while
+	TIM3_DISABLE();
+
+	cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SIDLE,1);//переходит в ожидание
+	cc1101_wait_until_iddle_state();
+	cc1101_command_strobe(CC1101_STROBE_SFRX, 1);//все не считанное очищаем
+	cc1101_wait_until_iddle_state();
+//передача uart
+	if(crc_ok){//если пакет был принят с верной CRC
+		const char str_rn = "\n\0";
+		uart_transmit_string(rf_rx_data, CC1101_FIXED_PACKET_LENGTH+2);
+		uart_transmit_string(str_rn, 2);
+	}//if
+	else
+		n_bytes_recieved = 0;
+	return n_bytes_recieved;
+}
+///////////////
+uint8_t main_rf_slave_echo(uint8_t *rf_rx_data){
+	uint8_t n_bytes_recieved = 0;
+	uint8_t cc1101_status_byte = 0;
+	uint8_t rx_fifo = 0;
+	static uint8_t crc_ok = 0;
+	uint8_t tmp = 0;
+	global_main_flag_tim3_update = 0;
+	tim3_init(4*TIM_1SEC_PSC,TIM_1SEC_ARR);
+	TIM3_ENABLE();
+	cc1101_packet_processing_ended = 0;//сбрасываем флаг получения\отправки пакета
+
+
+	while(!(global_main_flag_tim3_update || crc_ok)){//ждем 1 секунду или до получения пакета с верной CRC
+		cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+		n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+					if(n_bytes_recieved){
+						cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+						crc_ok = cc1101_paket_crc_check(rf_rx_data);//проверяем CRC
+						if(crc_ok){
+							crc_ok = 0;
+						}
+					}
+		if(cc1101_packet_processing_ended){//если получег пакет
+			cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SRX,1);//переходит в прием
+			cc1101_packet_processing_ended = 0;
+
+		}//if
+	}//while
+	TIM3_DISABLE();
+	n_bytes_recieved =main_rx_operation(rf_rx_data,NEW_BUFF_SIZE);
+	cc1101_status_byte  =cc1101_command_strobe(CC1101_STROBE_SIDLE,1);
+	cc1101_wait_until_iddle_state();
+	cc1101_command_strobe(CC1101_STROBE_SFRX,1);
+	rx_fifo =  cc1101_data_read(CC1101_RXBYTES);
+	if(crc_ok){
+		/*tim3_init(TIM_1SEC_PSC,TIM_1SEC_ARR);
+		TIM3_ENABLE();
+		while(!global_main_flag_tim3_update){
+			main_tx_operation(rf_rx_data,n_bytes_recieved);//передаем по rf
+		}
+		TIM3_DISABLE();*/
+	}
+	else
+		n_bytes_recieved = 0;
+	return n_bytes_recieved;
+}
+
+uint8_t main_tx_operation(uint8_t * data_ptr, uint8_t tx_data_to_send){
+	uint8_t cc1101_status_byte =0;
+	uint8_t tx_num_fifo_data =0;
+	uint8_t lack_of_packet_len = 0;
+	uint8_t ui;
+	uint8_t garbage = 0;
+	tx_num_fifo_data = cc1101_data_read(CC1101_TXBYTES);
+	if(tx_data_to_send + tx_num_fifo_data >62) return BUFFER_OVERFLOW;
+	cc1101_status_byte = cc1101_data_write_burst(CC1101_TX_FIFO_BURST, data_ptr, tx_data_to_send);// str_len(data_ptr)
+	tx_num_fifo_data = cc1101_data_read(CC1101_TXBYTES);
+	while(tx_num_fifo_data){//передаем пока все не передастся
+		if(tx_num_fifo_data < CC1101_FIXED_PACKET_LENGTH){//если данные на передачу меньше длинны пакета
+			lack_of_packet_len = CC1101_FIXED_PACKET_LENGTH - tx_num_fifo_data;
+			for(ui = 0; ui < lack_of_packet_len; ui++)//добиваем нулями
+				cc1101_status_byte = cc1101_data_send(CC1101_TX_FIFO_SINGL, garbage);
+		}
+		cc1101_status_byte = cc1101_command_strobe(CC1101_STROBE_STX,0);//начинаем отправку загруженных данных
+		cc1101_wait_until_iddle_state();//пока трансивер не перейдет в ожидание\ ждем
+		tx_num_fifo_data = cc1101_data_read(CC1101_TXBYTES);//узнаем сколько еще к отправке
+	}
+	return cc1101_status_byte;
+}
+
+int8_t main_rx_operation(uint8_t * data_arr, uint8_t max_data_to_read){//возвращает количество принятых байт
+	uint8_t cc1101_status_byte =0;
+	int tmp = 65;
+	uint8_t rx_num_data = 0;
+	uint8_t crc_ok = 0;
+	if(max_data_to_read == 0) max_data_to_read = 64;
+	rx_num_data = cc1101_data_read(CC1101_RXBYTES);//узнаем количество принятых байт
+	if(rx_num_data > max_data_to_read)
+		rx_num_data = max_data_to_read;
+	if(rx_num_data >0){
+		cc1101_status_byte = cc1101_data_read_burst(CC1101_RX_FIFO_BURST, data_arr, rx_num_data);
+	}
+	return rx_num_data;
+}

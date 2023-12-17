@@ -1,0 +1,7 @@
+../Core/Src/dma.c:6:6:dma_rx_reinit	3
+../Core/Src/dma.c:20:6:dma_tx_reinit	3
+../Core/Src/dma.c:35:9:dma_init	5
+../Core/Src/dma.c:87:6:DMA1_Channel4_IRQHandler	3
+../Core/Src/dma.c:97:6:DMA1_Channel5_IRQHandler	3
+../Core/Src/dma.c:112:6:DMA1_Channel6_IRQHandler	3
+../Core/Src/dma.c:126:6:DMA1_Channel7_IRQHandler	3

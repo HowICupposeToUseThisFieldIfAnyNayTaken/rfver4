@@ -1,0 +1,7 @@
+../Core/Src/string.c:5:9:str_compare	6
+../Core/Src/string.c:17:9:str_len	4
+../Core/Src/string.c:26:9:str_copy	3
+../Core/Src/string.c:40:9:str_concatenation	8
+../Core/Src/string.c:63:6:hex32_2str	3
+../Core/Src/string.c:85:6:num32_2str	4
+../Core/Src/string.c:116:6:hex2char	17

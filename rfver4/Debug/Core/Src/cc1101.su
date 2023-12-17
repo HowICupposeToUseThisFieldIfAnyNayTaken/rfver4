@@ -1,0 +1,11 @@
+../Core/Src/cc1101.c:84:6:cc1101_init	16	static,ignoring_inline_asm
+../Core/Src/cc1101.c:107:9:cc1101_paket_crc_check	24	static
+../Core/Src/cc1101.c:114:9:cc1101_data_send	24	static
+../Core/Src/cc1101.c:128:9:cc1101_command_strobe	24	static
+../Core/Src/cc1101.c:142:9:cc1101_data_read	24	static
+../Core/Src/cc1101.c:157:9:cc1101_data_read_burst	32	static
+../Core/Src/cc1101.c:173:9:cc1101_wait_until_iddle_state	16	static
+../Core/Src/cc1101.c:183:9:cc1101_data_write_burst	24	static
+../Core/Src/cc1101.c:198:9:cc1101_tx_send_single_byte	16	static
+../Core/Src/cc1101.c:201:9:cc1101_rx_read_single_byte	8	static
+../Core/Src/cc1101.c:205:9:cc1101_rssi_convert_to_dbm	24	static

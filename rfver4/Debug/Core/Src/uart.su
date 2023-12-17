@@ -1,0 +1,8 @@
+../Drivers/CMSIS/Include/core_cm3.h:1762:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Core/Src/uart.c:23:9:uart1_init	16	static
+../Core/Src/uart.c:48:9:uart2_init	16	static
+../Core/Src/uart.c:66:9:uart_transmit_string	16	static
+../Core/Src/uart.c:87:9:uart_recieve_string	16	static
+../Core/Src/uart.c:109:6:uart1_echo	264	static
+../Core/Src/uart.c:122:6:USART1_IRQHandler	24	static
+../Core/Src/uart.c:141:6:USART2_IRQHandler	16	static
