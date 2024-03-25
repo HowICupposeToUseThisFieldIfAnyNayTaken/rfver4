@@ -26,12 +26,14 @@
 extern uint8_t global_main_flag_tim3_update;
 extern uint8_t global_main_flag_tim2_update;
 extern uint8_t global_main_flag_tim1_update;
+extern uint16_t global_relative_time;
 void TIM3_IRQHandler (void);
 void TIM2_IRQHandler (void);
 void TIM1_UP_IRQHandler (void);
 
+
 void tim3_init(uint16_t tim_psk, uint16_t tim_arr);
 void tim2_init(uint16_t tim_psk, uint16_t tim_arr);
 void tim1_init(uint16_t tim_psk, uint16_t tim_arr);
-void tim2_time_ms(uint16_t msec);
+void delay_ms(uint16_t ms);
 #endif

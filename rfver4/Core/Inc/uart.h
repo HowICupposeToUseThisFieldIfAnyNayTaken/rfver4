@@ -4,7 +4,7 @@
 #include "directive.h"
 #include "dma.h"
 #include "string.h"
-
+#include "tim.h"
     //pa11 enable
     //pa12 command enable
     //pa10 rxD
@@ -56,7 +56,7 @@ extern uint8_t global_uart2_flag_data_transmitted;
 void USART1_IRQHandler();//вызывается по окончанию приема
 void USART2_IRQHandler();
 
-int16_t uart_init(char * str_rx, char * str_tx);
+int16_t uart1_init(char * str_rx, char * str_tx);
 int16_t uart2_init(char * str_rx, char * str_tx);
 void uart_echo();
 uint8_t uart_transmit_string(uint8_t uart_num, char *str_tx, uint8_t lenght);//возвращает количество успешно переданных символов

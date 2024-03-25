@@ -1,157 +1,90 @@
 
 #include "directive.h"
-#include "uart.h"
-#include "spi.h"
-#include "dma.h"
+#include "i2c.h"
 #include "tim.h"
-#include "neo6m.h"
-
-#include "protokol.h"
+#include "max5980.h"
+#include "uart.h"
+#include "dma.h"
 #include "string.h"
-//#include "cc1101.h"
-#include "si4432.h"
+/*
+ *..    ／＞　 フ
+　　　　　| 　_　 _|
+　 　　　／`ミ _x 彡
+　　 　 /　　　 　 |
+　　　 /　 ヽ　　 ﾉ
+　／￣|　　 |　|　|
+　| (￣ヽ＿_ヽ_)_)
+　＼二つ
+i2c-Master: Контроллер STM32F103C8T6. - тестировалось на Ф103с6 тк с8 оказался не верифицируемым на подлинность -_- привет taggsm,
+для корректной работы нужно найти хедер для с8, тк в с6 нет и2с2
+(Тактирование внешнее от кварца на 8Мгц + часовой кварц. - внешний на 8 используется, разгоняется до 36Мгц, часовой кварц инициализирован
+ и выходит на частоту(больше никак не используется)
+Интерфейс отладки — SWD - этот интерфейс используется по умолчанию, скорее чтобы его убрать надо приложить немало усилий
+I2C2 — PB10/PB11.
+USART2 — PA2/PA3.)
+юарт2 и спи2 легко переинициализируются на юарт1 и спи1, спи требует настройки времени и режима, константы для 36мгц забиты
+юарт работает через дма, спи в циклах, для избежания бесконечных циклов в них встроен таймер который через 50мс выходит из функции с ошибкой
+i2c-Slave: контроллер PoE MAX5980GTJ+. - в наличии не было, проверить в живую не удалось
+Ознакомиться с возможностями по управлению контроллером PoE. - ознакомился, очень интересно.
+Написать программу опроса состояния выходных портов контроллера и отправки сообщений - написано, опрашивает(в теории корректно).
+об их состоянии по uart в читаемом виде (например: «DEBUG: PORT(1) — LOAD DETECT»).
+ отправляет данные в формате DEBUG: PORT(1) device_detection device_class
+ в сом терминале успешно игнорирует любые символы переноса строки
 
-
-#define CC1101_RX_BUFFER_SIZE 64
-#define NEW_BUFF_SIZE 50
-
-uint32_t global_relative_time = 0;
-uint32_t global_time_is_real = 0;
-
-void gpio_x_pin_y_config(GPIO_TypeDef * GPIOx,uint8_t pin_y, uint8_t mode, uint8_t cnf );
-void gpio_init();
-void rcc_init();
-void peripherial_init();
+Функции обмена по i2c сделать отдельными файлами *.с/*.h сделано. много. отдельных. файлов.
+ */
 void interrupts_first_init();
-void exti0_init();
-void exti1_init();
-void echo_general(char * str_recieve,char * data_to_transfer);
+void rcc_init();
+/////////////////
+int main(void) {
+	uint8_t buff[64];
+	uint8_t uart_tx[UART_TX_BUFF_SIZE]="test meow meow meow\n\0";
+	uint8_t uart_rx[UART_RX_BUFF_SIZE];
 
-uint8_t main_rf_slave_echo(uint8_t *rf_rx_data);
-uint8_t main_rf_master_echo(uint8_t *rf_rx_data);
-uint8_t main_tx_operation(uint8_t * data_ptr, uint8_t n_tx_data);
-int8_t  main_rx_operation(uint8_t * data_arr, uint8_t max_data_to_read);
-uint8_t cc1101_wait_until_iddle_state();
-void sync_time(uint8_t * str_gps_rx, struct ubx_tim_tp * s_neo6m_msg);
+	uint8_t buff_rx[2] = {0,0};
 
-const uint8_t is_master = 1;
-const uint8_t use_uart = 1;
-const uint8_t use_gps = 0;
-
-//////////////////////global variables
-
-int main(void){
-	int i;
-	int tmp = 65;
-	uint8_t chip_type =0;
-	uint8_t n_bytes_recieved =0;
-	uint8_t crc_ok = 0;
-	uint8_t  rf_rx_data[NEW_BUFF_SIZE];
-	//
-	const char str_sgnl_error[] = {'n','s','g','n'};
-	char data_to_transfer[255];
-	char str_ready[]="\nready to transfer\n";
-	char str_test[] = "AT\r\n\0";
-	char str_recieve[UART_RX_BUFF_SIZE];
-	char str_transmit_buffer[UART_TX_BUFF_SIZE] = "no1\n\0";
-	char str_gps_rx[UART_RX_BUFF_SIZE] = "start data";
-	char str_gps_tx[UART_TX_BUFF_SIZE] = "no1\n\0";
-	struct ubx_tim_tp s_neo6m_msg;
-	//general init
-	n_bytes_recieved = 0;
-	for(i = 0; i< NEW_BUFF_SIZE;i++){
-		 rf_rx_data[i] = 0;
-	}
-	peripherial_init();
-	{
-		int16_t err_code = 0;
-		if(is_master && use_uart)
-			uart1_init(str_recieve,str_transmit_buffer );
-		if(use_gps)
-			uart2_init(str_gps_rx,str_gps_tx );
-		if(is_master && use_uart)
-			dma_init(UART1_NUMBER, 5, global_uart_tx_data, UART_RX_BUFF_SIZE, global_uart_rx_data);
-		if(use_gps)
-			dma_init(UART2_NUMBER, 5, global_uart2_tx_data, UART_RX_BUFF_SIZE, global_uart2_rx_data);
-
-		do{
-			err_code = si4432_init();
-		}while(err_code != ERROR_NO_ERROR);
-	}
-	interrupts_first_init();
-	if(is_master && use_uart)
-			BLUETOOTH_ENABLE();
-
-
-	//end of general init
-
-	do{//если модуль не отвечает, проблемы с пайкой, программа будет  висеть здесь
-		chip_type = si4432_read_register(SI4432_REG_Device_Type);
-	}while(chip_type !=  SI4432_CHIP_TYPE);
-	//сообщаем о готовности
-	if(is_master && use_uart){
-		i = str_len(str_ready);
-		uart_transmit_string(UART1_NUMBER, str_ready, str_len(str_ready));
-	}
-	while(1){
-		if(use_gps){
-			sync_time(str_gps_rx, &s_neo6m_msg);
-		}
-		echo_general(str_recieve, data_to_transfer);
-
-	}
-}
-/////////////////////////////////////////////////////////////////////////////////
-void sync_time(uint8_t * str_gps_rx, struct ubx_tim_tp * s_neo6m_msg){
-	static uint8_t waiting_tim_tp = 0;
-
-	if(!global_time_is_real){//время не синхронизированно
-		if(!waiting_tim_tp){//включаем прием пока не придет сообщение
-					uart_recieve_string(UART2_NUMBER, str_gps_rx);
-					waiting_tim_tp = 1;
-		}
-		if(global_uart2_flag_data_recieved){//если пришло сообщение на юарт
-			if(global_relative_time){//если первый тайм пульс пришел и пошел отсчет времени
-				int16_t is_correct = ubx_msg_is_correct(str_gps_rx);//если формат сообщения ubx и сообщение tim-tp
-				if(is_correct > 0) {
-					ubx_tim_tp_decrypt(str_gps_rx, s_neo6m_msg);
-					ubx_set_time(s_neo6m_msg);
-				}
-			}
-			else
-				waiting_tim_tp = 0;
-		}
-	}
-
-}
-
-void peripherial_init(){
+	buff[0] = 127;
+	buff[1] = 6;
+	const char* det_str = 0;
+	const char* class_str = 0;
 	rcc_init();
-	tim1_init(TIM1_MSEC_PSK,1000);//1000ms
-	exti0_init();
-	exti1_init();
-	gpio_init();
-	spi1_init();
+	tim2_init(TIM1_MSEC_PSK/2,2);//timer2 1ms for exit from endless loop
+	i2c_init();
+	interrupts_first_init();
+	dma_init(2, UART_TX_BUFF_SIZE, uart_tx, UART_RX_BUFF_SIZE, uart_rx);
+	uart2_init(uart_rx, uart_tx);
+	//TIM2_ENABLE();
 
-	//cc1101_init();
-}
+	while (1) {
 
-void interrupts_first_init(){
-	NVIC_EnableIRQ(USART1_IRQn);
-	NVIC_EnableIRQ(USART2_IRQn);
-	if(is_master){
-		NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-		NVIC_EnableIRQ(DMA1_Channel5_IRQn);
-	}
-	if(use_gps){
-			NVIC_EnableIRQ(DMA1_Channel6_IRQn);
-			NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+		delay_ms(1000);
+
+#ifdef IS_READY
+		for(uint8_t port_n = 0; port_n < MAX_PORT_NUMBER; port_n++){
+			char port_str[] = "DEBUG: PORT(N)\n\n\0";
+			port_str[12]=hex2char(port_n);
+			max_port_status_check(port_n, &det_str, &class_str);
+			uart_transmit_string(2, port_str, str_len(port_str));
+			delay_ms(100);
+			uart_transmit_string(2, det_str, str_len(det_str));
+			delay_ms(100);
+			uart_transmit_string(2, class_str, str_len(class_str));
+			delay_ms(100);
 		}
-	NVIC_EnableIRQ(EXTI0_IRQn);
-	NVIC_EnableIRQ(NVIC_NEO6M_PPS_DETECT);
-	NVIC_EnableIRQ(TIM3_IRQn);
-	 __enable_irq (); // Разрешить прерывания IRQ
-	 //__disable_irq ();// Запретить прерывания IRQ
+#endif
+#ifdef IS_MASTER
+		i2c_send_data(MAX_DEVICE_ADDRESS,buff ,1);
+#endif
+#ifdef IS_SLAVE
+		i2c_slave_read_data(MAX_DEVICE_ADDRESS, buff_rx, 1);
+#endif
+		//i2c_read_data(0x27,buff ,1);
+		//i2c_send_data(MAX_DEVICE_ADDRESS,buff ,1);
+		//i2c_send_and_read(MAX_DEVICE_ADDRESS, 127);
+		//delay_ms(1000);
+		//max_port_status_check(port_n, detection_str, class_str)
+	}
+
 }
 
 void rcc_init(){//36mhz
@@ -168,18 +101,30 @@ void rcc_init(){//36mhz
 
 	RCC->CFGR |= RCC_CFGR_SW_PLL;//переключаем SYSCLK на тактирование от PLL
 	while(!(RCC->CFGR & RCC_CFGR_SWS_PLL)){}//пока не переключится SYSCLK на PLL
+	//
+	//RTC
+	//
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;//Power interface clock enable | Backup interface clock enable
+	PWR->CR |= PWR_CR_DBP;//
+	RCC->BDCR |=RCC_CLOCK_SOURSE_LSE<<RCC_BDCR_RTCSEL_Pos;//тактирование часов от часового кварца
+	RCC->BDCR |= RCC_BDCR_LSEON;//External low-speed oscillator enable
+	RCC->BDCR |=RCC_BDCR_RTCEN;//включение часов
+
+	while(!(RCC->BDCR & RCC_BDCR_LSERDY)){}//пока не стабилизируется часовой кварц
+	//BIT_NUMBER_RESET(PWR->CR, PWR_CR_DBP);
 }
-void gpio_init(){
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
 
-	//gpio_x_pin_y_config(GPIOA, BLUETOOTH_PIN_nENABLE, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_OUTPUT_OPEN_DRAIN);
-	//gpio_x_pin_y_config(GPIOA, BLUETOOTH_PIN_AT_COMMANT, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_OUTPUT_OPEN_DRAIN);
-	//gpio_x_pin_y_config(GPIOB, 1, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_OUTPUT_OPEN_DRAIN);
-	//gpio_x_pin_y_config(GPIOB, 2, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_OUTPUT_OPEN_DRAIN);
+void interrupts_first_init(){
+	NVIC_EnableIRQ(USART2_IRQn);
+
+	NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+
+	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_EnableIRQ(TIM3_IRQn);
+	 __enable_irq (); // Разрешить прерывания IRQ
+	 //__disable_irq ();// Запретить прерывания IRQ
 }
-
-
 
 void gpio_x_pin_y_config(GPIO_TypeDef * GPIOx,uint8_t pin_y, uint8_t mode, uint8_t cnf ){
 	if(pin_y > 7){//другой регистр
@@ -191,130 +136,5 @@ void gpio_x_pin_y_config(GPIO_TypeDef * GPIOx,uint8_t pin_y, uint8_t mode, uint8
 	else{
 		GPIOx->CRL = (GPIOx->CRL & 	( ~((uint32_t)(0x0003<<(pin_y*4))))) | mode<<(pin_y*4);
 		GPIOx->CRL = (GPIOx->CRL & 	( ~((uint32_t)(0x0003<<(2+pin_y*4))))) | cnf<<(2+pin_y*4);
-	}
-}
-
-void exti0_init(){
-	//exti0 - a0 falling
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;//тактирование альтернативных функий
-	EXTI->IMR |= EXTI_IMR_IM0;//прерывание по 0му пину
-	EXTI->FTSR |= EXTI_FTSR_FT0;//falling trigger event configuration bit of line x
-	//EXTI->RTSR |= EXTI_RTSR_RT0;//rising trigger event configuration bit of line x
-	AFIO->EXTICR[0] = AFIO_EXTICR1_EXTI0_PA;//прерывания искать по порту А
-}
-void exti1_init(){
-	//exti1 - b1 rising
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;//тактирование альтернативных функий
-	EXTI->IMR |= EXTI_IMR_IM1;//прерывание по 1му пину
-	//EXTI->FTSR |= EXTI_FTSR_FT0;//falling trigger event configuration bit of line x
-	EXTI->RTSR |= EXTI_RTSR_RT1;//rising trigger event configuration bit of line x
-	AFIO->EXTICR[0] = Neo6M_EXTI;//прерывания искать по порту B
-}
-
-void EXTI0_IRQHandler(){
-	EXTI->PR |= EXTI_PR_PR0;
-	si4432_interrupt = 1;
-}
-void EXTI1_IRQHandler(){
-	EXTI->PR |= EXTI_PR_PR1;
-	TIM1_ENABLE();
-	NVIC_DisableIRQ(NVIC_NEO6M_PPS_DETECT);
-	neo6m_interrupt = 1;
-}
-void delay_ms(uint16_t msec){
-	const uint16_t psk = CPU_CLOCK_MHZ * FREQUENCY_KHZ;
-	//tim2_init(psk, msec);
-	//TIM2_ENABLE();
-
-	//while(!global_main_flag_tim2_update){};
-	for(int i = 0; i < msec *CPU_CLOCK_MHZ*50; i++){
-		//иначе работает криво
-	}
-}
-
-//-----------------------------------------------------------------------------
-/// Эхо юарт-si4432 - si4432(slave) - si4432 - юарт
-//-----------------------------------------------------------------------------
-void echo_general(char * str_recieve,char * data_to_transfer){
-	//общее эхо
-	uint8_t rx_len = 0;
-	uint16_t i = 0;
-	uint8_t is_data_in_stock = 0;
-	while(is_master){//для ведущего устройства
-		//
-		if(use_uart && (!is_data_in_stock)){
-			uart_recieve_string(UART1_NUMBER, str_recieve);
-			//waiting data via uart
-			while(global_uart_flag_data_recieved <= 0){};
-			is_data_in_stock = 1;
-		}
-		tim2_time_ms(SI4432_TX_TIME_MS);
-		//1sec tx
-		do{
-			si4432_tx_packet(str_recieve);
-		}
-		while(!global_main_flag_tim2_update);
-		//2sec recieve data
-		rx_len = 0;
-		rx_len = si4432_rx_packet(data_to_transfer, SI4432_RX_TIME_MS);
-		if(rx_len > 0){
-			//data is sucsesful received
-
-			if(use_uart){
-				char str = '\n';
-				uart_transmit_string(UART1_NUMBER, data_to_transfer, rx_len);
-				//uart_transmit_string(&str, 1);
-			}
-			rx_len = 0;
-			is_data_in_stock =0;
-			return;
-		}
-	}//общее эхо конец
-	while(is_master == 0){//для ведомого устройства
-
-		for(i =0; i< SI4432_PACKET_LENGHT; i++){
-			data_to_transfer[i] = 0;
-		}
-		rx_len = 0;
-		rx_len = si4432_rx_packet(data_to_transfer, SI4432_RX_TIME_MS);
-
-		if(rx_len > 0){
-			char str[] = "!tim";
-			//data_to_transfer[3] = 'o';
-			if(!str_compare(data_to_transfer, str, 4)){
-				data_to_transfer[3] = global_relative_time&0xff;
-				data_to_transfer[2] = (global_relative_time>>8)&0xff;
-				data_to_transfer[1] = (global_relative_time>>16)&0xff;
-				data_to_transfer[0] = (global_relative_time>>24)&0xff;
-			}
-			si4432_tx_packet(data_to_transfer);
-			return;
-		}
-	}//общее эхо конец
-
-}
-/*
- * struct date_format{
-	uint16_t year;
-	uint8_t	month;
-	uint8_t	day;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-	uint16_t sub_seconds;
-};
- *
- */
-void date_increment(struct date_format * s_date){
-	s_date->second++;
-	if(s_date->second >= 60){
-		s_date->minute +=s_date->second / 60;
-		s_date->second %= 60;
-
-		s_date->hour +=s_date->minute / 60;
-		s_date->minute %= 60;
-
-		s_date->day +=s_date->hour / 24;
-		s_date->hour %= 24;
 	}
 }

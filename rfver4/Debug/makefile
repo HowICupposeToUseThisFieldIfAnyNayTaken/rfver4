@@ -59,8 +59,8 @@ all: main-build
 main-build: rf\ ver4.elf secondary-outputs
 
 # Tool invocations
-rf\ ver4.elf rf\ ver4.map: $(OBJS) $(USER_OBJS) D:\Hobby\STM32CubeIde_Workspace\rfver4\rfver4\STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "rf ver4.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\Hobby\STM32CubeIde_Workspace\rfver4\rfver4\STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="rf ver4.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+rf\ ver4.elf rf\ ver4.map: $(OBJS) $(USER_OBJS) D:\Hobby\STM32CubeIde_Workspace\i2c\ max\ test\rfver4\STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "rf ver4.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\Hobby\STM32CubeIde_Workspace\i2c max test\rfver4\STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="rf ver4.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

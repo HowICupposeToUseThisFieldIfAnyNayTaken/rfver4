@@ -5,38 +5,35 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/cc1101.c \
 ../Core/Src/dma.c \
+../Core/Src/i2c.c \
 ../Core/Src/main.c \
-../Core/Src/neo6m.c \
-../Core/Src/protokol.c \
-../Core/Src/si4432.c \
-../Core/Src/spi.c \
+../Core/Src/max5980.c \
 ../Core/Src/string.c \
+../Core/Src/syscalls.c \
+../Core/Src/sysmem.c \
 ../Core/Src/tim.c \
 ../Core/Src/uart.c 
 
 OBJS += \
-./Core/Src/cc1101.o \
 ./Core/Src/dma.o \
+./Core/Src/i2c.o \
 ./Core/Src/main.o \
-./Core/Src/neo6m.o \
-./Core/Src/protokol.o \
-./Core/Src/si4432.o \
-./Core/Src/spi.o \
+./Core/Src/max5980.o \
 ./Core/Src/string.o \
+./Core/Src/syscalls.o \
+./Core/Src/sysmem.o \
 ./Core/Src/tim.o \
 ./Core/Src/uart.o 
 
 C_DEPS += \
-./Core/Src/cc1101.d \
 ./Core/Src/dma.d \
+./Core/Src/i2c.d \
 ./Core/Src/main.d \
-./Core/Src/neo6m.d \
-./Core/Src/protokol.d \
-./Core/Src/si4432.d \
-./Core/Src/spi.d \
+./Core/Src/max5980.d \
 ./Core/Src/string.d \
+./Core/Src/syscalls.d \
+./Core/Src/sysmem.d \
 ./Core/Src/tim.d \
 ./Core/Src/uart.d 
 
@@ -48,7 +45,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/cc1101.cyclo ./Core/Src/cc1101.d ./Core/Src/cc1101.o ./Core/Src/cc1101.su ./Core/Src/dma.cyclo ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/neo6m.cyclo ./Core/Src/neo6m.d ./Core/Src/neo6m.o ./Core/Src/neo6m.su ./Core/Src/protokol.cyclo ./Core/Src/protokol.d ./Core/Src/protokol.o ./Core/Src/protokol.su ./Core/Src/si4432.cyclo ./Core/Src/si4432.d ./Core/Src/si4432.o ./Core/Src/si4432.su ./Core/Src/spi.cyclo ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/spi.su ./Core/Src/string.cyclo ./Core/Src/string.d ./Core/Src/string.o ./Core/Src/string.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/uart.cyclo ./Core/Src/uart.d ./Core/Src/uart.o ./Core/Src/uart.su
+	-$(RM) ./Core/Src/dma.cyclo ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/i2c.cyclo ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/i2c.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/max5980.cyclo ./Core/Src/max5980.d ./Core/Src/max5980.o ./Core/Src/max5980.su ./Core/Src/string.cyclo ./Core/Src/string.d ./Core/Src/string.o ./Core/Src/string.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/uart.cyclo ./Core/Src/uart.d ./Core/Src/uart.o ./Core/Src/uart.su
 
 .PHONY: clean-Core-2f-Src
 

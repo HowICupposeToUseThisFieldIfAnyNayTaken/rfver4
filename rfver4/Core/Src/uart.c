@@ -25,6 +25,7 @@ int16_t uart1_init(char * str_rx, char * str_tx){
 	global_uart_rx_data = str_rx;
 	global_uart_tx_data = str_tx;
 	UART1_GPIO_CLOCK_ON();//тактирование портов uart
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	gpio_x_pin_y_config(UART1_PORT, UART1_TX_PIN, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_ALTERNATE_FUNCTION_PUSH_PULL);//pa9 tx
 	gpio_x_pin_y_config(UART1_PORT, UART1_RX_PIN, GPIO_CR_MODE_INPUT, GPIO_CR_CNF_INPUT_FLOATING);//pa10 rx
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;//тактирование usart
@@ -33,7 +34,7 @@ int16_t uart1_init(char * str_rx, char * str_tx){
 	//1stop bit
 	//dma
 	//считаем baudrate не по даташиту но результат такой же
-	USART1->BRR = UART1_CLOCK / UART1_BAUD_RATE;//https://easystm32.ru/interfaces/15-uart-in-stm32-part-1/
+	USART1->BRR = UART1_CLOCK / UART1_BAUD_RATE;//datasheet can go eat sheet
 	//USART1->CR1 |= USART_CR1_M
 	//USART1->CR1 |= USART_CR1_TXEIE;// прерывание по передаче
 	//USART1->CR1 |= USART_CR1_RXNEIE;// прерывание по приему ORE=1 or RXNE=1 in the USART_SR register
@@ -50,13 +51,13 @@ int16_t uart2_init(char * str_rx, char * str_tx){
 	global_uart2_rx_data = str_rx;
 	global_uart2_tx_data = str_tx;
 	UART2_GPIO_CLOCK_ON();//тактирование портов uart2
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	gpio_x_pin_y_config(UART2_PORT, UART2_TX_PIN, GPIO_CR_MODE_OUTPUT_SPEED_50MHZ, GPIO_CR_CNF_ALTERNATE_FUNCTION_PUSH_PULL);//pa2 tx
 	gpio_x_pin_y_config(UART2_PORT, UART2_RX_PIN, GPIO_CR_MODE_INPUT, GPIO_CR_CNF_INPUT_FLOATING);//pa3 rx
 	UART2_CLOCK_ON();//тактирование usart2
 	USART2->CR1 |= USART_CR1_UE;//включение usart2
 	//8bit word lenght 1stop bit dma
-	//считаем baudrate не по даташиту но результат такой же
-	USART2->BRR = UART2_CLOCK / UART2_BAUD_RATE;//https://easystm32.ru/interfaces/15-uart-in-stm32-part-1/
+	USART2->BRR = UART2_CLOCK / UART2_BAUD_RATE;//datasheet can go eat sheet
 	USART2->CR1 |=  USART_CR1_RE | USART_CR1_TE;//разрешение приема и передачи
 	USART2->CR1 |=  USART_CR1_IDLEIE;//прерывание при прекращении пересылки данных по Rx
 	USART2->CR3 |= USART_CR3_DMAR | USART_CR3_DMAT; //прием и передача через DMA

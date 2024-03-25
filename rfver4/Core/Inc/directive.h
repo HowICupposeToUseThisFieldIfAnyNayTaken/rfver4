@@ -5,13 +5,22 @@
 #define DEC 10
 #define HEX 16
 #define STM32F103x6
-
+#include <stdint.h>
 #include "stm32f1xx.h"
+
+
+//#define TEST
+//#define IS_MASTER
+#define IS_READY
+//#define IS_SLAVE
 
 #define CPU_CLOCK_MHZ 36/*625*25*9*256*/
 #define FREQUENCY_KHZ 1000
 #define FREQUENCY_MHZ (1000 * FREQUENCY_KHZ)
-#define CPU_CLOCK CPU_CLOCK_MHZ * FREQUENCY_MHZ/* 8 MHz*/
+#define CPU_CLOCK (CPU_CLOCK_MHZ * FREQUENCY_MHZ)/* 36 MHz*/
+
+#define RCC_CLOCK_SOURSE_LSE 01
+#define APB1_CLOCK_MHZ CPU_CLOCK_MHZ
 
 #define ADC_2_FREQUENCY_RATIO 10
 #define SAMPLING_FREQUENCY	(CPU_CLOCK / ADC_2_FREQUENCY_RATIO )
@@ -121,27 +130,14 @@
 #define clk_delay(clks) for(unsigned long int i = 0;i < clks;i++){}
 #define us_delay(t_us) clk_delay(t_us*(US_DELAY))
 //
-struct date_format{
-	uint16_t year;
-	uint8_t	month;
-	uint8_t	day;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-	uint16_t sub_seconds;
-};
 
 //
 
-extern uint32_t global_relative_time;
-extern uint32_t global_time_is_real;
-
-void date_increment(struct date_format * s_date);
 void gpio_x_pin_y_config(GPIO_TypeDef * GPIOx,uint8_t pin_y, uint8_t moder_and_speed, uint8_t cnf );
 char hex2char(uint8_t num);
 void hex32_2str(uint32_t hex, char * str);
 void num32_2str(uint32_t num,uint8_t base, char *str);
-void delay_ms(uint16_t msec);
+
 ///
 
 //extern char str_recieve[UART_RX_BUFF_SIZE];

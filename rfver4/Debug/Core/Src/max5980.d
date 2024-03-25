@@ -1,4 +1,4 @@
-Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
+Core/Src/max5980.o: ../Core/Src/max5980.c ../Core/Inc/max5980.h \
  ../Core/Inc/directive.h \
  ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h \
  ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103x6.h \
@@ -7,9 +7,8 @@ Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
  ../Drivers/CMSIS/Include/cmsis_compiler.h \
  ../Drivers/CMSIS/Include/cmsis_gcc.h \
  ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h \
- ../Core/Inc/dma.h ../Core/Inc/uart.h ../Core/Inc/tim.h \
- ../Core/Inc/string.h
-../Core/Inc/uart.h:
+ ../Core/Inc/i2c.h
+../Core/Inc/max5980.h:
 ../Core/Inc/directive.h:
 ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
 ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103x6.h:
@@ -18,7 +17,4 @@ Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
 ../Drivers/CMSIS/Include/cmsis_compiler.h:
 ../Drivers/CMSIS/Include/cmsis_gcc.h:
 ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h:
-../Core/Inc/dma.h:
-../Core/Inc/uart.h:
-../Core/Inc/tim.h:
-../Core/Inc/string.h:
+../Core/Inc/i2c.h:
